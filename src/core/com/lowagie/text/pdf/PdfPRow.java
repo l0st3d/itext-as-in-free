@@ -85,6 +85,8 @@ public class PdfPRow {
 	protected float maxHeight = 0;
 	
 	protected boolean calculated = false;
+
+    boolean hasBeenDisplayed = false;
     
     private int[] canvasesPos;
     
@@ -116,6 +118,7 @@ public class PdfPRow {
 		widths = new float[cells.length];
 		System.arraycopy(row.widths, 0, widths, 0, cells.length);
 		initExtraHeights();
+		hasBeenDisplayed = row.hasBeenDisplayed;
 	}
 
 	/**

@@ -1122,6 +1122,50 @@ public class PdfPTable implements LargeElement{
     public ArrayList getRows() {
         return rows;
     }
+
+    private ArrayList getRows(int start, int end, boolean incluedDisplayedRows) {
+    	ArrayList list = new ArrayList();
+    	if (start < 0 || end > size()) {
+	    return list;
+    	}
+    	PdfPRow firstRow = adjustCellsInRow(start, end);
+    	int colIndex = 0;
+    	PdfPCell cell;
+    	while (colIndex < getNumberOfColumns()) {
+	    int rowIndex = start;
+	    while (rowSpanAbove(rowIndex--, colIndex)) {
+		PdfPRow row = getRow(rowIndex);
+		if (row != null) {
+		    PdfPCell replaceCell = row.getCells()[colIndex];
+		    if (replaceCell != null) {
+			firstRow.getCells()[colIndex] = new PdfPCell(replaceCell);
+			float extra = 0;
+			int stop = Math.min(rowIndex + replaceCell.getRowspan(), end);
+			for (int j = start + 1; j < stop; j++) {
+			    extra += getRowHeight(j);
+			}
+			firstRow.setExtraHeight(colIndex, extra);
+			float diff = getRowspanHeight(rowIndex, colIndex)
+			    - getRowHeight(start) - extra;
+			firstRow.getCells()[colIndex].consumeHeight(diff);
+		    }
+		}
+	    }
+	    cell = firstRow.getCells()[colIndex];
+	    if (cell == null)
+		colIndex++;
+	    else
+		colIndex += cell.getColspan();
+    	}
+	if (incluedDisplayedRows || ( ! firstRow.hasBeenDisplayed))
+	    list.add(firstRow);
+    	for (int i = start + 1; i < end; i++) {
+	    PdfPRow r = adjustCellsInRow(i, end);
+	    if (incluedDisplayedRows || ( ! r.hasBeenDisplayed))
+    		list.add(r);
+    	}
+    	return list;
+    }
     
     /**
      * Gets an arraylist with a selection of rows.
@@ -1131,44 +1175,19 @@ public class PdfPTable implements LargeElement{
      * @since	2.1.6
      */
     public ArrayList getRows(int start, int end) {
-    	ArrayList list = new ArrayList();
-    	if (start < 0 || end > size()) {
-    		return list;
-    	}
-    	PdfPRow firstRow = adjustCellsInRow(start, end);
-    	int colIndex = 0;
-    	PdfPCell cell;
-    	while (colIndex < getNumberOfColumns()) {
-    		int rowIndex = start;
-    		while (rowSpanAbove(rowIndex--, colIndex)) {
-    			PdfPRow row = getRow(rowIndex);
-    			if (row != null) {
-    				PdfPCell replaceCell = row.getCells()[colIndex];
-    				if (replaceCell != null) {
-        				firstRow.getCells()[colIndex] = new PdfPCell(replaceCell);
-    					float extra = 0;
-    					int stop = Math.min(rowIndex + replaceCell.getRowspan(), end);
-    					for (int j = start + 1; j < stop; j++) {
-    						extra += getRowHeight(j);
-    					}
-    					firstRow.setExtraHeight(colIndex, extra);
-    					float diff = getRowspanHeight(rowIndex, colIndex)
-    						- getRowHeight(start) - extra;
-    					firstRow.getCells()[colIndex].consumeHeight(diff);
-    				}
-    			}
-    		}
-    		cell = firstRow.getCells()[colIndex];
-    		if (cell == null)
-    			colIndex++;
-    		else
-    			colIndex += cell.getColspan();
-    	}
-    	list.add(firstRow);
-    	for (int i = start + 1; i < end; i++) {
-    		list.add(adjustCellsInRow(i, end));
-    	}
-    	return list;
+	return getRows(start, end, true);
+    }
+
+    public ArrayList getRowsThatHaventBeenDisplayed(int start, int end) {
+	return getRows(start, end, false);
+    }
+
+    public void markRowsAsDisplayed(int start, int end) {
+    	if (start >= 0 && end <= size()) {
+	    for (int i = start; i < end; i++) {
+		getRow(i).hasBeenDisplayed = true;
+	    }
+	}
     }
     
     /**
