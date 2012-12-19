@@ -1369,16 +1369,11 @@ public class ColumnText {
 		    yTemp -= footerHeight;
 		int offsetForRedisplayingRowsBug = 0;
                 for (k = listIdx; k < table.size(); ++k) {
-		    if (table.getRow(k).hasBeenDisplayed) {
-			offsetForRedisplayingRowsBug++;
-		    } else {
-			float rowHeight = table.getRowHeight(k);
-			if (yTemp - rowHeight < minY)
-			    break;
-			yTemp -= rowHeight;
-		    }
+		    float rowHeight = table.getRowHeight(k);
+		    if (yTemp - rowHeight < minY)
+			break;
+		    yTemp -= rowHeight;
                 }
-		k -= offsetForRedisplayingRowsBug;
                 if (!table.isComplete())
 		    yTemp += footerHeight;
                 // either k is the first row that doesn't fit on the page (break);
@@ -1405,8 +1400,9 @@ public class ColumnText {
                         compositeElements.removeFirst();
                         splittedRow = false;
                         continue;
-                    } else if (k == listIdx && !firstPass && (!table.isSplitRows() || table.isSplitLate()) && (table.getFooterRows() == 0 || table.isComplete()))
+                    } else if (k == listIdx && !firstPass && (!table.isSplitRows() || table.isSplitLate()) && (table.getFooterRows() == 0 || table.isComplete())) {
                         return NO_MORE_COLUMN;
+		    }
                 }
                 // or k is the number of rows in the table (for loop was done).
                 firstPass = false;
